@@ -1,0 +1,89 @@
+    a. Write an OpenMP program to show how thread private clause works.
+
+#include <omp.h>
+#include<stdio.h>
+
+int tid,a,b;
+float x;
+
+#pragma omp threadprivate(a, x)
+int main ()
+{
+omp_set_dynamic(0);
+printf("1st Parallel Region:\n");
+#pragma omp parallel private(b,tid)
+{
+tid = omp_get_thread_num();
+a = tid;
+b = tid;
+x = 1.1 * tid +1.0;
+printf("Thread %d: a,b,x= %d %d %f\n",tid,a,b,x);
+}
+
+printf("************************************\n");
+printf("Master thread doing serial work here\n");
+printf("************************************\n");
+
+printf("2nd Parallel Region:\n");
+#pragma omp parallel private(tid)
+{
+tid = omp_get_thread_num();
+printf("Thread %d: a,b,x= %d %d %f\n",tid,a,b,x);
+}
+
+}
+
+Output:
+1st Parallel Region:
+Thread 0: a,b,x= 0 0 1.000000
+Thread 3: a,b,x= 3 3 4.300000
+Thread 2: a,b,x= 2 2 3.200000
+Thread 1: a,b,x= 1 1 2.100000
+************************************
+Master thread doing serial work here
+************************************
+2nd Parallel Region:
+Thread 2: a,b,x= 2 0 3.200000
+Thread 1: a,b,x= 1 0 2.100000
+Thread 3: a,b,x= 3 0 4.300000
+Thread 0: a,b,x= 0 0 1.000000
+    b.  Write a MPI program to find sum of 'n' integers on 'p' processors using  point-to-point communication libraries call
+
+#include <stdio.h>
+#include <mpi.h>
+
+int main(int argc,char *argv[])
+{
+	int i, rank, size, value, sum = 0;
+	int Source, Destination;
+	MPI_Status status;
+
+	MPI_Init(&argc,&argv);
+	MPI_Comm_size(MPI_COMM_WORLD,&size);
+	MPI_Comm_rank(MPI_COMM_WORLD,&rank);
+
+if(rank == 0)
+{
+for(i = 1 ; i < size ; i++)
+{
+   	Source = i;
+   	MPI_Recv(&value, 1, MPI_INT, Source, 0, MPI_COMM_WORLD, &status);
+   	sum = sum + value;
+}
+printf("MyRank = %d, SUM = %d\n", rank, sum);
+}
+
+	else
+	{
+	Destination = 0;
+	MPI_Send(&rank, 1, MPI_INT, Destination, 0, MPI_COMM_WORLD);
+	}
+
+	MPI_Finalize();
+
+}
+Output:
+behera@behera-Inspiron-N5010:~/MPI$ mpirun -np 4 f3
+MyRank = 0, SUM = 6
+behera@behera-Inspiron-N5010:~/MPI$ mpirun -np 8 f3
+MyRank = 0, SUM = 28
