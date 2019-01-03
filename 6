@@ -1,0 +1,81 @@
+    a. Write an OpenMP program to find the number of processes, number of threads, etc (the environment information).
+#include <omp.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+int main (int argc, char *argv[])
+{
+int nthreads, tid, procs, maxt, inpar, dynamic, nested;
+
+#pragma omp parallel private(nthreads, tid)
+{
+    tid = omp_get_thread_num();
+    if (tid == 0)
+    {
+   	 printf("Thread %d getting environment info...\n", tid);
+   	 procs = omp_get_num_procs(); 
+//Number of processors
+   	 nthreads = omp_get_num_threads(); 
+//Number of threads
+   	 maxt = omp_get_max_threads();  
+//Maximum number of threads
+   	 inpar = omp_in_parallel();
+   	//omp_set_dynamic(1);	 
+dynamic = omp_get_dynamic();
+   	 nested = omp_get_nested();
+
+   	 /* Print environment information */
+   	 printf("Number of processors = %d\n", procs);
+   	 printf("Number of threads = %d\n", nthreads);
+   	 printf("Max threads = %d\n", maxt);
+   	 printf("In parallel? = %d\n", inpar);
+   	 printf("Dynamic threads enabled? = %d\n", dynamic);
+   	 printf("Nested parallelism supported? = %d\n", nested);
+    }
+}
+}
+
+Output:
+Thread 0 getting environment info...
+Number of processors = 4
+Number of threads = 4
+Max threads = 4
+In parallel? = 1
+Dynamic threads enabled? = 0
+Nested parallelism supported? = 0
+
+b.  Write a MPI program scatter the information to different processes 
+(Consider at least Six Processes).
+
+#include <stdio.h>
+#include <mpi.h>
+
+int main (int argc, char *argv[])
+{  
+
+int data[] = {1, 2, 3, 4, 5, 6, 7};
+// Size must be >= number of processors
+int rank, i = -1;
+
+   MPI_Init (&argc, &argv);
+   MPI_Comm_rank (MPI_COMM_WORLD, &rank);
+   MPI_Scatter ((void *)data, 1, MPI_INT,(void *)&i  , 1, MPI_INT,0, MPI_COMM_WORLD);
+
+   printf ("[%d] Received i = %d\n", rank, i);
+   MPI_Finalize();   
+   return 0;
+}
+
+
+
+
+Output:
+behera@behera-Inspiron-N5010:~/MPI$ mpirun -np 8 f7
+[0] Received i = 1
+[6] Received i = 7
+[7] Received i = 0
+[5] Received i = 6
+[2] Received i = 3
+[4] Received i = 5
+[3] Received i = 4
+[1] Received i = 2
