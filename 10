@@ -1,0 +1,80 @@
+    a. Write an OpenMP program to print all the letters of the alphabet A- Z using threads.
+
+#include <stdio.h>
+#include <omp.h>
+
+int main(void)
+{
+int i;
+omp_set_num_threads(4);
+#pragma omp parallel private(i)
+{ 
+// OMP_NUM_THREADS is not a multiple of 26, which can be considered a bug in this code.
+// LettersPerThread  = lpt
+int lpt = 26 / omp_get_num_threads();
+int tid = omp_get_thread_num();
+//printf("Thread No: %d \n ", tid );
+
+int StartLetter = 'a'+tid*lpt;
+int EndLetter = 'a'+tid*lpt+lpt;
+
+for (i=StartLetter; i<EndLetter; i++)
+printf("%c", i);
+}
+printf("\n");
+return 0;
+}
+
+Output:
+abcdefmnopqrghijklstuvwx
+Comments : Missing yz 
+To have all alphabets printed set number of threads to be 2,13,26 ( i.e, multiple of 26) 
+
+    b.  Write a CUDA program to print the message “Hello World” and demonstrate blocks by varying NUM_BLOCKS to different sizes.
+
+#include <stdio.h>
+#define NUM_BLOCKS 1
+#define BLOCK_WIDTH 512
+
+
+__global__ void hello()
+{
+    printf("Hello world! I'm thread %d\n", threadIdx.x);
+}
+
+int main(int argc,char **argv)
+{
+    // launch the kernel
+    hello<<<NUM_BLOCKS, BLOCK_WIDTH>>>();
+
+    // force the printf()s to flush
+    cudaDeviceSynchronize();
+
+    printf("That's all!\n");
+
+    return 0;
+}
+
+Output:
+RESULTS: NUM_block 1
+Hello world! I'm thread 0
+Hello world! I'm thread 1
+Hello world! I'm thread 2
+Hello world! I'm thread 3
+Hello world! I'm thread 4
+RESULTS2: NUM_block 2
+Hello world! I'm thread 0
+Hello world! I'm thread 1
+Hello world! I'm thread 2
+Hello world! I'm thread 3
+…..
+Hello world! I'm thread 63
+Hello world! I'm thread 0
+Hello world! I'm thread 1
+Hello world! I'm thread 2
+Hello world! I'm thread 3
+….
+Hello world! I'm thread 62
+Hello world! I'm thread 63
+That's all!
+
