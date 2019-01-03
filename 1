@@ -1,0 +1,104 @@
+    a. Write an OpenMP program to perform addition of two arrays A & B store the result in the array C (Using Scheduling concept)
+
+#include <omp.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#define N 10
+
+int main (int argc, char *argv[])
+{
+int nthreads, tid, i, chunk;
+float a[N], b[N], c[N];
+
+for (i=0; i < N; i++)
+a[i] = b[i] = i * 1.0;
+
+chunk = 2;
+
+#pragma omp parallel shared(a,b,c,nthreads,chunk) private(i,tid)
+{
+tid = omp_get_thread_num();
+
+//if (tid == 0)
+//{
+//nthreads = omp_get_num_threads();
+//printf("Number of threads = %d\n", nthreads);
+//}
+
+printf("Thread %d starting...\n",tid);
+#pragma omp for schedule (dynamic, chunk)
+for (i=0; i<N; i++)
+{
+c[i] = a[i] + b[i];
+printf("Thread %d: c[%d]= %f\n",tid,i,c[i]);
+}
+
+}
+}
+
+Output:
+Thread 1 starting...
+Thread 1: c[0]= 0.000000
+Thread 1: c[1]= 2.000000
+Thread 3 starting...
+Thread 3: c[4]= 8.000000
+Thread 3: c[5]= 10.000000
+Thread 3: c[6]= 12.000000
+Thread 3: c[7]= 14.000000
+Thread 3: c[8]= 16.000000
+Thread 3: c[9]= 18.000000
+Number of threads = 4
+Thread 0 starting...
+Thread 2 starting...
+Thread 1: c[2]= 4.000000
+Thread 1: c[3]= 6.000000
+
+
+
+
+    b. Write a CUDA program to print the message “Hello World” and demonstrate blocks by varying NUM_BLOCKS to different sizes.
+#include <stdio.h>
+#define NUM_BLOCKS 1
+#define BLOCK_WIDTH 64
+
+__global__ void hello()
+{
+    printf("Hello world! I'm thread %d\n", threadIdx.x);
+}
+
+int main(int argc,char **argv)
+{
+    // launch the kernel
+    hello<<<NUM_BLOCKS, BLOCK_WIDTH>>>();
+
+    // force the printf()s to flush
+    cudaDeviceSynchronize();
+
+    printf("That's all!\n");
+
+    return 0;
+}
+
+Output:
+RESULTS: 1 num blocks
+Hello world! I'm thread 0
+Hello world! I'm thread 1
+Hello world! I'm thread 2
+Hello world! I'm thread 3
+Hello world! I'm thread 4
+RESULTS2: NUM_block 2
+Hello world! I'm thread 0
+Hello world! I'm thread 1
+Hello world! I'm thread 2
+Hello world! I'm thread 3
+…..
+Hello world! I'm thread 63
+Hello world! I'm thread 0
+Hello world! I'm thread 1
+Hello world! I'm thread 2
+Hello world! I'm thread 3
+….
+Hello world! I'm thread 62
+Hello world! I'm thread 63
+That's all!
