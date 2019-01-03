@@ -1,0 +1,156 @@
+    a. Write an OpenMP program  to multiply two matrices A & B and find the resultant matrix C
+
+#include <omp.h>
+#include <stdio.h>
+#include <stdlib.h>
+#define NRA 5
+#define NCA 5
+#define NCB 5
+int main (int argc, char *argv[])
+{
+int tid, nthreads, i, j, k, chunk;
+double a[NRA][NCA],b[NCA][NCB],c[NRA][NCB];
+chunk = 2;
+
+#pragma omp parallel shared(a,b,c,nthreads,chunk) private(tid,i,j,k)
+{
+tid = omp_get_thread_num();
+if (tid == 0)
+{
+nthreads = omp_get_num_threads();
+printf("Starting matrix multiple example with %d threads\n",nthreads);
+printf("Initializing matrices...\n");
+}
+#pragma omp for schedule (static, chunk)
+for (i=0; i<NRA; i++)
+for (j=0; j<NCA; j++)
+a[i][j]= i+j;
+
+#pragma omp for schedule (static, chunk)
+for (i=0; i<NCA; i++)
+for (j=0; j<NCB; j++)
+b[i][j]= i*j;
+
+#pragma omp for schedule (static, chunk)
+for (i=0; i<NRA; i++)
+for (j=0; j<NCB; j++)
+c[i][j]= 0;
+
+/*** Do matrix multiply sharing iterations on outer loop ***/
+/*** Display who does which iterations for demonstration purposes ***/
+printf("Thread %d starting matrix multiply...\n",tid);
+    #pragma omp for schedule (static, chunk)
+    for (i=0; i<NRA; i++)
+    {
+    printf("Thread=%d did row=%d\n",tid,i);
+    for(j=0; j<NCB; j++)
+    for (k=0; k<NCA; k++)
+    c[i][j] += a[i][k] * b[k][j];
+    }
+}
+//End of parallel region 
+
+printf("A Matrix:\n");
+for (i=0; i<NRA; i++)
+{
+    for (j=0; j<NCA; j++)
+    printf("%6.1f ", a[i][j]);
+    printf("\n");
+}
+
+printf("B Matrix:\n");
+for (i=0; i<NCA; i++)
+{
+    for (j=0; j<NCB; j++)
+    printf("%6.1f ", b[i][j]);
+    printf("\n");
+}
+
+printf("*****************\n");
+printf("Result Matrix:\n");
+for (i=0; i<NRA; i++)
+{
+    for (j=0; j<NCB; j++)
+    printf("%6.1f ", c[i][j]);
+    printf("\n");
+}
+printf("***************\n");
+}
+
+
+Output:
+Starting matrix multiple example with 4 threads
+Initializing matrices...
+Thread 3 starting matrix multiply...
+Thread 0 starting matrix multiply...
+Thread=0 did row=0
+Thread=0 did row=1
+Thread 1 starting matrix multiply...
+Thread=1 did row=2
+Thread=1 did row=3
+Thread 2 starting matrix multiply...
+Thread=2 did row=4
+A Matrix:
+   0.0	1.0	2.0	3.0	4.0
+   1.0	2.0	3.0	4.0	5.0
+   2.0	3.0	4.0	5.0	6.0
+   3.0	4.0	5.0	6.0	7.0
+   4.0	5.0	6.0	7.0	8.0
+B Matrix:
+   0.0	0.0	0.0	0.0	0.0
+   0.0	1.0	2.0	3.0	4.0
+   0.0	2.0	4.0	6.0	8.0
+   0.0	3.0	6.0	9.0   12.0
+   0.0	4.0	8.0   12.0   16.0
+*****************
+Result Matrix:
+   0.0   30.0   60.0   90.0  120.0
+   0.0   40.0   80.0  120.0  160.0
+   0.0   50.0  100.0  150.0  200.0
+   0.0   60.0  120.0  180.0  240.0
+   0.0   70.0  140.0  210.0  280.0
+***************
+
+b. Write a CUDA program to print the message “Hello World” and demonstrate threads by varying BLOCK_WIDTH to different sizes.
+#include <stdio.h>
+#define NUM_BLOCKS 32
+#define BLOCK_WIDTH 1
+
+__global__ void hello()
+{
+    printf("Hello world! I'm a thread in block %d\n", blockIdx.x);
+}
+
+int main(int argc,char **argv)
+{
+    // launch the kernel
+    hello<<<NUM_BLOCKS, BLOCK_WIDTH>>>();
+
+    // force the printf()s to flush
+    cudaDeviceSynchronize();
+
+    printf("That's all!\n");
+
+    return 0;
+}
+
+Output:
+RESULTS: 32 block width
+Hello world! I'm a thread in block 19
+Hello world! I'm a thread in block 1
+…...
+Hello world! I'm a thread in block 7
+Hello world! I'm a thread in block 31
+That's all!
+
+RESULT2: 64 block width
+Hello world! I'm a thread in block 2
+Hello world! I'm a thread in block 2
+Hello world! I'm a thread in block 20
+Hello world! I'm a thread in block 20
+……. 
+Hello world! I'm a thread in block 30
+Hello world! I'm a thread in block 30
+Hello world! I'm a thread in block 15
+Hello world! I'm a thread in block 15
+That's all!
